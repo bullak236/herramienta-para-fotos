@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortador de Imágenes Proporcional — Bullak Studio</title>
+    <style>
+        :root {
+            --bg: #121214;
+            --surface: #1a1a1e;
+            --border: #3a3a42;
+            --text: #e1e1e6;
+            --text-muted: #a8a8b2;
+            --accent: #00ff66;
+            --radius: 0px; /* Estilo brutalista, bordes filosos */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--surface);
+            border: 3px solid var(--border);
+            padding: 2.5rem;
+            box-shadow: 8px 8px 0px #000000;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        select {
+            width: 100%;
+            background: var(--bg);
+            color: var(--text);
+            border: 2px solid var(--border);
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: var(--text);
+        }
+
+        /* Zona de drop interactiva */
+        .dropzone {
+            border: 3px dashed var(--border);
+            padding: 3rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 255, 102, 0.04);
+        }
+
+        .dropzone p {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .dropzone span {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Ocultar input de archivo estándar */
+        #fileInput {
+            display: none;
+        }
+
+        /* Vista previa y descarga */
+        .preview-box {
+            display: none;
+            margin-top: 2rem;
+            border-top: 2px dashed var(--border);
+            padding-top: 1.5rem;
+            text-align: center;
+        }
+
+        .preview-box.active {
+            display: block;
+        }
+
+        .canvas-container {
+            max-width: 100%;
+            margin: 0 auto 1.5rem auto;
+            border: 2px solid var(--border);
+            background: #000;
+            display: inline-block;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            background: var(--accent);
+            color: #000;
+            border: 2px solid #000;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: var(--border);
+            color: var(--text);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Ajuste de Imágenes Proporcional</h1>
+        <p class="subtitle">Mirko, procesá tus fotos acá. Se recortan al centro de forma exacta y se escalan sin estirar ni deformar un solo píxel.</p>
+    </header>
+
+    <div class="control-group">
+        <label for="presetSelect">Tipo de Imagen (Destino)</label>
+        <select id="presetSelect">
+            <option value="800x800" data-folder="img/productos/">Producto Standard (800 x 800 px) - 1:1</option>
+            <option value="1200x630" data-folder="img/categorias/">Banner Categoría (1200 x 630 px) - 1.91:1</option>
+            <option value="400x400" data-folder="img/logos/">Logo Cuadrado (400 x 400 px) - 1:1</option>
+            <option value="1920x1080" data-folder="img/banners/">Slider Home Full HD (1920 x 1080 px) - 16:9</option>
+        </select>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+        <p>ARRASTRÁ TU FOTO ACÁ</p>
+        <span>o hacé click para buscar el archivo</span>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div class="preview-box" id="previewBox">
+        <div class="info-badge" id="infoBadge">Listo para descargar</div>
+        <div class="canvas-container">
+            <canvas id="canvasPreview"></canvas>
+        </div>
+        <button class="btn" id="downloadBtn">Descargar Imagen Optimizada</button>
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const presetSelect = document.getElementById('presetSelect');
+    const previewBox = document.getElementById('previewBox');
+    const canvas = document.getElementById('canvasPreview');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const infoBadge = document.getElementById('infoBadge');
+
+    let currentImage = null;
+
+    // Triggers para el click en la zona de drop
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    // Eventos de arrastre
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        }, false);
+    });
+
+    // Procesar archivo soltado
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    // Procesar archivo seleccionado por buscador
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    // Recalcular si cambian el selector con la imagen ya cargada
+    presetSelect.addEventListener('change', () => {
+        if (currentImage) {
+            processImage(currentImage);
+        }
+    });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Che, tirá un archivo de imagen válido (PNG, JPG, WebP).');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                currentImage = img;
+                processImage(img);
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function processImage(img) {
+        // Obtener dimensiones deseadas del preset
+        const [targetWidth, targetHeight] = presetSelect.value.split('x').map(Number);
+        const selectedOption = presetSelect.options[presetSelect.selectedIndex];
+        const targetFolder = selectedOption.getAttribute('data-folder');
+
+        // Configurar tamaño real del canvas
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        // Limpiar lienzo
+        ctx.clearRect(0, 0, targetWidth, targetHeight);
+
+        // LÓGICA DE CORTE CENTRAL (Cover sin deformar)
+        const sourceWidth = img.width;
+        const sourceHeight = img.height;
+
+        const targetRatio = targetWidth / targetHeight;
+        const sourceRatio = sourceWidth / sourceHeight;
+
+        let sX, sY, sWidth, sHeight;
+
+        if (sourceRatio > targetRatio) {
+            // La imagen origen es más ancha que el destino -> recortamos los costados
+            sHeight = sourceHeight;
+            sWidth = sourceHeight * targetRatio;
+            sX = (sourceWidth - sWidth) / 2;
+            sY = 0;
+        } else {
+            // La imagen origen es más alta que el destino -> recortamos arriba y abajo
+            sWidth = sourceWidth;
+            sHeight = sourceWidth / targetRatio;
+            sX = 0;
+            sY = (sourceHeight - sHeight) / 2;
+        }
+
+        // Dibujar en el canvas recortando el origen y rellenando el destino exactamente
+        ctx.drawImage(img, sX, sY, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+
+        // Actualizar UI
+        infoBadge.textContent = `Destino sugerido: ${targetFolder} (Medida: ${targetWidth}x${targetHeight}px)`;
+        previewBox.classList.add('active');
+
+        // Configurar acción de descarga
+        downloadBtn.onclick = function() {
+            const link = document.createElement('a');
+            link.download = `optimizada_${targetWidth}x${targetHeight}.jpg`;
+            // Exportamos como JPEG de alta calidad (0.92) para web
+            link.href = canvas.toDataURL('image/jpeg', 0.92);
+            link.click();
+        };
+    }
+</script>
+
+</body>
+</html>
